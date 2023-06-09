@@ -1,2 +1,4 @@
 __pycache__/
-miscellaneous
+miscellaneous/documentation_scripts
+miscellaneous/integration_tests_scripts
+.gitkeep
