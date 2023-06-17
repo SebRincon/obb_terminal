@@ -303,7 +303,7 @@ class OpenBBFigure(go.Figure):
         Returns the figure as a subplot of another figure
     """
 
-    plotlyjs_path: Path = PLOTLYJS_PATH
+    # plotlyjs_path: Path = PLOTLYJS_PATH
 
     def __init__(self, fig: Optional[go.Figure] = None, **kwargs) -> None:
         super().__init__()
