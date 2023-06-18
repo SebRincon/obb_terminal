@@ -330,12 +330,11 @@ class OpenBBFigure(go.Figure):
 
         self.update_layout(**kwargs)
 
-        if plots_backend().isatty:
-            self.update_layout(
-                margin=dict(l=0, r=0, t=0, b=0, pad=0, autoexpand=True),
-                height=plots_backend().HEIGHT,
-                width=plots_backend().WIDTH,
-            )
+
+        self.update_layout(
+            margin=dict(l=0, r=0, t=0, b=0, pad=0, autoexpand=True),
+
+        )
 
     @property
     def subplots_kwargs(self):
@@ -1046,7 +1045,7 @@ class OpenBBFigure(go.Figure):
         self.bar_width = kwargs.pop("bar_width", self.bar_width)
         self._export_image = export_image
 
-        if export_image and not plots_backend().isatty:
+        if export_image :
             if isinstance(export_image, str):
                 export_image = Path(export_image).resolve()
             export_image.touch()
@@ -1085,29 +1084,28 @@ class OpenBBFigure(go.Figure):
             return self.to_json()
 
         kwargs.update(config=dict(scrollZoom=True, displaylogo=False))
-        if plots_backend().isatty:
-            try:
-                # We check if we need to export the image
-                # This is done to avoid opening after exporting
-                if export_image:
-                    self._exported = True
 
-                # We send the figure to the backend to be displayed
-                return plots_backend().send_figure(self, export_image)
-            except Exception:
-                # If the backend fails, we just show the figure normally
-                # This is a very rare case, but it's better to have a fallback
-                if get_current_system().DEBUG_MODE:
-                    console.print_exception()
+        try:
+            # We check if we need to export the image
+            # This is done to avoid opening after exporting
+            if export_image:
+                self._exported = True
 
-                # We check if any figures were initialized before the backend failed
-                # If so, we show them with the default plotly backend
-                queue = plots_backend().get_pending()
-                for pending in queue:
-                    fig = json.loads(pending).get("plotly", {})
-                    if not fig:
-                        continue
-                    pio.show(fig, *args, **kwargs)
+            # We send the figure to the backend to be displayed
+        except Exception:
+            # If the backend fails, we just show the figure normally
+            # This is a very rare case, but it's better to have a fallback
+            if get_current_system().DEBUG_MODE:
+                console.print_exception()
+
+            # We check if any figures were initialized before the backend failed
+            # If so, we show them with the default plotly backend
+
+            for pending in queue:
+                fig = json.loads(pending).get("plotly", {})
+                if not fig:
+                    continue
+                pio.show(fig, *args, **kwargs)
 
         height = 600 if not self.layout.height else self.layout.height
         self.update_layout(
@@ -1384,7 +1382,7 @@ class OpenBBFigure(go.Figure):
         self._apply_feature_flags()
         self._xaxis_tickformatstops()
 
-        if not plots_backend().isatty and self.data[0].type != "table":
+        if self.data[0].type != "table":
             margin = self.layout.margin
             L, R, B, T = margin["l"], margin["r"], margin["b"], margin["t"]
             for var, max_val in zip([L, R, B, T], [60, 50, 80, 40]):
@@ -1562,30 +1560,30 @@ class OpenBBFigure(go.Figure):
         )
 
         # We adjust margins
-        if plots_backend().isatty:
-            for key in ["l", "r", "b", "t", "pad"]:
-                if key in self.layout.margin and self.layout.margin[key] is not None:
-                    self.layout.margin[key] += margin_add.get(key, 0)
-                else:
-                    self.layout.margin[key] = margin_add.get(key, 0)
 
-        if not plots_backend().isatty:
-            org_margin = self.layout.margin
-            margin = dict(l=40, r=60, b=80, t=50)
-            for key, max_val in zip(["l", "r", "b", "t"], [60, 50, 80, 50]):
-                org = org_margin[key] or 0
-                if (org + margin[key]) > max_val:
-                    self.layout.margin[key] = max_val
-                else:
-                    self.layout.margin[key] = org + margin[key]
+        for key in ["l", "r", "b", "t", "pad"]:
+            if key in self.layout.margin and self.layout.margin[key] is not None:
+                self.layout.margin[key] += margin_add.get(key, 0)
+            else:
+                self.layout.margin[key] = margin_add.get(key, 0)
+
+
+        org_margin = self.layout.margin
+        margin = dict(l=40, r=60, b=80, t=50)
+        for key, max_val in zip(["l", "r", "b", "t"], [60, 50, 80, 50]):
+            org = org_margin[key] or 0
+            if (org + margin[key]) > max_val:
+                self.layout.margin[key] = max_val
+            else:
+                self.layout.margin[key] = org + margin[key]
 
         self._margin_adjusted = True
 
     def _set_watermark(self) -> None:
         """Set the watermark for OpenBB Terminal."""
         if (
-            not plots_backend().isatty
-            or not get_current_user().preferences.PLOT_ENABLE_PYWRY
+
+            get_current_user().preferences.PLOT_ENABLE_PYWRY
             or isinstance(self._export_image, Path)
             and self._export_image.suffix in [".svg", ".pdf"]
         ):
