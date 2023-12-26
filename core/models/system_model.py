@@ -60,7 +60,7 @@ class SystemModel(BaseModel):
     def __repr__(self) -> str:  # pylint: disable=useless-super-delegation
         return super().__repr__()
 
-    @root_validator(allow_reuse=True)
+    @root_validator(skip_on_failure=True)
     @classmethod
     def add_additional_handlers(cls, values):
         if (
